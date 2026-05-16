@@ -4,7 +4,7 @@ import os
 import sys
 
 from aiogram import Bot, Dispatcher
-from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
 from dotenv import load_dotenv
 
 from database.firebase import init_firebase
@@ -23,7 +23,10 @@ async def main() -> None:
     init_firebase()
 
     # 2. Aiogram setup
-    bot = Bot(token=os.getenv("TELEGRAM_TOKEN"), parse_mode=ParseMode.HTML)
+    bot = Bot(
+        token=os.getenv("TELEGRAM_TOKEN"),
+        default=DefaultBotProperties(parse_mode="HTML")
+    )
     dp = Dispatcher()
 
     # 3. Routers
