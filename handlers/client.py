@@ -79,7 +79,7 @@ async def callback_stats(callback_query: CallbackQuery) -> None:
 async def callback_support(callback_query: CallbackQuery) -> None:
     text = (
         "🎧 <b>Support</b>\n\n"
-        "If you need help, please contact our support team at support@example.com"
+        "If you need help, please contact our support team at @BwsCompany_Manager"
     )
     await callback_query.message.edit_text(text, reply_markup=back_to_menu())
     await callback_query.answer()
