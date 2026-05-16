@@ -13,7 +13,10 @@ from middlewares.admin import AdminMiddleware
 
 
 async def main() -> None:
-    load_dotenv()
+    # Load .env only for local dev; Railway uses dashboard env vars directly.
+    if os.path.exists(".env"):
+        load_dotenv()
+
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
 
     # 1. Connect to Firestore

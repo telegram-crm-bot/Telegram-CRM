@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import os
@@ -9,21 +10,39 @@ logger = logging.getLogger(__name__)
 _db = None
 
 
+def _load_service_account() -> dict:
+    """Load service account from Base64 (preferred) or raw JSON string."""
+    b64_env = os.getenv("FIREBASE_SERVICE_ACCOUNT_B64")
+    if b64_env:
+        try:
+            decoded = base64.b64decode(b64_env).decode("utf-8")
+            return json.loads(decoded)
+        except Exception as exc:
+            raise ValueError(
+                "FIREBASE_SERVICE_ACCOUNT_B64 is set but cannot be decoded/parsed. "
+                "Ensure it is a valid Base64-encoded JSON string."
+            ) from exc
+
+    raw_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+    if raw_json:
+        try:
+            return json.loads(raw_json)
+        except json.JSONDecodeError as exc:
+            raise ValueError("FIREBASE_SERVICE_ACCOUNT_JSON contains invalid JSON.") from exc
+
+    raise ValueError(
+        "No Firebase credentials found. Set either FIREBASE_SERVICE_ACCOUNT_B64 "
+        "(Base64-encoded JSON, recommended for Railway) or FIREBASE_SERVICE_ACCOUNT_JSON."
+    )
+
+
 def init_firebase() -> firestore.Client:
-    """Initialize Firebase Admin SDK from a JSON string in the env var."""
+    """Initialize Firebase Admin SDK from environment variables."""
     global _db
     if _db is not None:
         return _db
 
-    raw_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
-    if not raw_json:
-        raise ValueError("Environment variable FIREBASE_SERVICE_ACCOUNT_JSON is not set.")
-
-    try:
-        service_account_info = json.loads(raw_json)
-    except json.JSONDecodeError as exc:
-        raise ValueError("FIREBASE_SERVICE_ACCOUNT_JSON contains invalid JSON.") from exc
-
+    service_account_info = _load_service_account()
     cred = credentials.Certificate(service_account_info)
     firebase_admin.initialize_app(cred)
     _db = firestore.client()
