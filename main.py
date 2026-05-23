@@ -112,6 +112,9 @@ async def main() -> None:
     logging.info(f"API Сервер BWS запущен на порту {port}")
 
     # 4. Запуск бота
+    logging.info("Удаляем старые вебхуки, если они есть...")
+    await bot.delete_webhook(drop_pending_updates=True) # <--- ДОБАВЬ ЭТУ СТРОКУ
+    
     await dp.start_polling(bot)
 
 
