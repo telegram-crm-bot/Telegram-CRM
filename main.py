@@ -16,7 +16,6 @@ from middlewares.admin import AdminMiddleware
 
 # ===== API ПРИЕМНИК ЗАЯВОК С САЙТОВ КЛИЕНТОВ =====
 async def handle_new_lead(request: web.Request) -> web.Response:
-    # Разрешаем запросы с любых сайтов (CORS)
     cors_headers = {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -47,9 +46,10 @@ async def handle_new_lead(request: web.Request) -> web.Response:
         }
         db.collection("leads").add(lead_data)
 
-        # 2. Ищем Владельца этого бизнеса в базе и отправляем ему пуш
+        # 2. Ищем Владельца этого бизнеса в базе и отправляем ему уведомление
+        # Используем ключевой аргумент filter для устранения UserWarning
         users_ref = db.collection("crm_users")
-        query = users_ref.where("orgId", "==", org_id).where("role", "==", "admin").stream()
+        query = users_ref.where(filter=firestore.FieldFilter("orgId", "==", org_id)).where(filter=firestore.FieldFilter("role", "==", "admin")).stream()
 
         for user_doc in query:
             user_data = user_doc.to_dict()
@@ -97,7 +97,7 @@ async def main() -> None:
     admin.router.message.middleware(AdminMiddleware())
     admin.router.callback_query.middleware(AdminMiddleware())
 
-    # 3. Запуск веб-сервера aiohttp (параллельно боту)
+    # 3. Запуск веб-сервера aiohttp
     app = web.Application()
     app['bot'] = bot
     app.router.add_route('OPTIONS', '/api/new-lead', handle_new_lead)
@@ -113,8 +113,9 @@ async def main() -> None:
 
     # 4. Запуск бота
     logging.info("Удаляем старые вебхуки, если они есть...")
-    await bot.delete_webhook(drop_pending_updates=True) # <--- ДОБАВЬ ЭТУ СТРОКУ
+    await bot.delete_webhook(drop_pending_updates=True)
     
+    logging.info("Запуск polling...")
     await dp.start_polling(bot)
 
 
