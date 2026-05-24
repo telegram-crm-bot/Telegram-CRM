@@ -37,10 +37,9 @@ async def handle_new_lead(request: web.Request) -> web.Response:
         # 1. Сохраняем лид в CRM клиента
         lead_data = {
             "orgId": org_id,
-            "name": data.get("name", "Без имени"),
-            "phone": data.get("phone", "Нет телефона"),
-            "service": data.get("service", "Не указана"),
-            "comments": data.get("comments", ""),
+            "name": data.get("name", "No name"),
+            "phone": data.get("phone", "No phone"),
+            "service": data.get("service", "Not specified"),
             "status": "New",
             "createdAt": firestore.SERVER_TIMESTAMP
         }
@@ -57,16 +56,16 @@ async def handle_new_lead(request: web.Request) -> web.Response:
 
             if chat_id:
                 text = (
-                    f"🔥 <b>Новая заявка с сайта!</b>\n\n"
-                    f"👤 Имя: {lead_data['name']}\n"
-                    f"📞 Тел: {lead_data['phone']}\n"
-                    f"🛠 Услуга: {lead_data['service']}\n\n"
-                    f"<i>Зайдите в BWS CRM для обработки.</i>"
+                    f"🔥 <b>New Website Lead!</b>\n\n"
+                    f"👤 Name: {lead_data['name']}\n"
+                    f"📞 Phone: {lead_data['phone']}\n"
+                    f"🛠 Service: {lead_data['service']}\n\n"
+                    f"<i>Please check BWS CRM to process this lead.</i>"
                 )
                 try:
                     await bot.send_message(chat_id=chat_id, text=text)
                 except Exception as e:
-                    logging.error("Не удалось отправить уведомление %s: %s", chat_id, e)
+                    logging.error("Failed to send notification to %s: %s", chat_id, e)
 
         return web.json_response({"success": True}, headers=cors_headers)
 
@@ -109,13 +108,13 @@ async def main() -> None:
     port = int(os.getenv("PORT", 8080))
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
-    logging.info(f"API Сервер BWS запущен на порту {port}")
+    logging.info(f"BWS API Server started on port {port}")
 
     # 4. Запуск бота
-    logging.info("Удаляем старые вебхуки, если они есть...")
+    logging.info("Removing old webhooks if any...")
     await bot.delete_webhook(drop_pending_updates=True)
     
-    logging.info("Запуск polling...")
+    logging.info("Starting polling...")
     await dp.start_polling(bot)
 
 

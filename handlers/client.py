@@ -29,30 +29,30 @@ async def cmd_start(message: Message, command: CommandObject) -> None:
 
         if success:
             await message.answer(
-                "✅ <b>Отлично!</b>\n\nВаш аккаунт BWS CRM успешно привязан.\nТеперь новые заявки будут приходить сюда.",
+                "✅ <b>Success!</b>\n\nYour BWS CRM account has been linked successfully.\nNew leads will now appear here.",
                 reply_markup=main_menu(CRM_WEBSITE_URL),
             )
         else:
-            await message.answer("❌ Ошибка: Пользователь не найден. Убедитесь, что вы перешли по ссылке из настроек CRM.")
+            await message.answer("❌ Error: User not found. Please make sure you used the link from your CRM settings.")
     
     # Обычный старт (без ссылки)
     else:
         user = get_user_by_chat_id(str(message.from_user.id))
         if user:
             await message.answer(
-                "👋 С возвращением! Выберите действие:",
+                "👋 Welcome back! Choose an option:",
                 reply_markup=main_menu(CRM_WEBSITE_URL),
             )
         else:
             await message.answer(
-                "❌ Пожалуйста, перейдите по ссылке 'Connect Telegram' из настроек вашей BWS CRM."
+                "❌ Please use the 'Connect Telegram' link from your BWS CRM settings."
             )
 
 
 @router.callback_query(F.data == "main_menu")
 async def callback_main_menu(callback_query: CallbackQuery) -> None:
     await callback_query.message.edit_text(
-        "Главное меню. Выберите действие:",
+        "Main Menu. Choose an option:",
         reply_markup=main_menu(CRM_WEBSITE_URL),
     )
     await callback_query.answer()
@@ -62,7 +62,7 @@ async def callback_main_menu(callback_query: CallbackQuery) -> None:
 async def callback_stats(callback_query: CallbackQuery) -> None:
     user = get_user_by_chat_id(str(callback_query.from_user.id))
     if not user:
-        await callback_query.answer("Пользователь не найден.", show_alert=True)
+        await callback_query.answer("User not found.", show_alert=True)
         return
 
     org_id = user.get("orgId")
@@ -72,7 +72,7 @@ async def callback_stats(callback_query: CallbackQuery) -> None:
     docs = db.collection("leads").where("orgId", "==", org_id).stream()
     count = len(list(docs))
 
-    text = f"📊 <b>Статистика BWS CRM</b>\n\nВсего лидов: <b>{count}</b>"
+    text = f"📊 <b>BWS CRM Stats</b>\n\nTotal Leads: <b>{count}</b>"
     await callback_query.message.edit_text(text, reply_markup=back_to_menu())
     await callback_query.answer()
 
@@ -80,8 +80,8 @@ async def callback_stats(callback_query: CallbackQuery) -> None:
 @router.callback_query(F.data == "client_support")
 async def callback_support(callback_query: CallbackQuery) -> None:
     text = (
-        "🎧 <b>Поддержка</b>\n\n"
-        "Если у вас возникли вопросы, свяжитесь с нами: @BwsCompany_Manager"
+        "🎧 <b>Support</b>\n\n"
+        "If you have any questions, please contact us: @BwsCompany_Manager"
     )
     await callback_query.message.edit_text(text, reply_markup=back_to_menu())
     await callback_query.answer()
